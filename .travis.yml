@@ -6,6 +6,11 @@ matrix:
       compiler: gcc
     - os: osx
       compiler: clang
+env:
+  global:
+   # The next declration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "ka4pcE7VYGihpJQrFYESvKpr+q1XTtn4z2Nfaw6464fdQgXXbbZF/7GGxiGWkCW1txwrht+sEp65BqKJcWVV4LBxhGC4TvebALNUAmtjVwyaVgIergUiozeoEblQSyN8/Tw5FEqLK/19CGJxNzxkHul6RlpU38OvLCqu4LQhJhA="
 addons:
   apt:
     packages:
@@ -22,6 +27,14 @@ addons:
       - libglew-dev
       - libqt4-dev
       - libcppunit-dev
+  coverity_scan:
+    project:
+      name: "arx/ArxLibertatis"
+      description: "ArxLibertatis coverity scan"
+    notification_email: fabianroth64@googlemail.com
+    build_command_prepend: "mkdir build && cd build && cmake --version && cmake .. -DICON_TYPE=none"
+    build_command: "make -j1"
+    branch_pattern: coverity_scan
 before_install:
   - if [ "$TRAVIS_OS_NAME" = linux ] ; then wget http://de.archive.ubuntu.com/ubuntu/pool/main/g/glm/libglm-dev_0.9.5.1-1_all.deb ; fi
   - if [ "$TRAVIS_OS_NAME" = linux ] ; then sudo dpkg -i libglm-dev_0.9.5.1-1_all.deb ; fi
@@ -29,16 +42,17 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" = osx ] ; then brew upgrade cmake boost ; fi
   - if [ "$TRAVIS_OS_NAME" = osx ] ; then brew install zlib freetype sdl2 glew qt5 cppunit glm ; fi
 script:
-  - mkdir build
-  - cd build
-  - cmake --version
-  - cmake .. -DICON_TYPE=none -DSTRICT_USE=1 -DBUILD_ALL=1
-  - make -j1
-  - make check
+  - if [[ ${COVERITY_SCAN_BRANCH} != 1 ]] ; then mkdir build ; fi
+  - if [[ ${COVERITY_SCAN_BRANCH} != 1 ]] ; then cd build ; fi
+  - if [[ ${COVERITY_SCAN_BRANCH} != 1 ]] ; then cmake --version ; fi
+  - if [[ ${COVERITY_SCAN_BRANCH} != 1 ]] ; then cmake .. -DICON_TYPE=none -DSTRICT_USE=1 -DBUILD_ALL=1 ; fi
+  - if [[ ${COVERITY_SCAN_BRANCH} != 1 ]] ; then make -j1 ; fi
+  - if [[ ${COVERITY_SCAN_BRANCH} != 1 ]] ; then make check ; fi
 branches:
   only:
     - master
     - travis
+    - coverity_scan
 notifications:
   irc:
     channels:
